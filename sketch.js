@@ -3,23 +3,45 @@ let cellSize;
 let offsetX, offsetY;
 let sliders = []; // To store the slider positions
 let relationships = [];
+let wsStatus = "Connecting...";
 
 function setup() {
   //fix class
-   // const  wsHandler = new WebSocketHandler('ws://localhost:8081');
-  
-      // Connect to WebSocket server
-  const ws = new WebSocket('ws://localhost:3000');
-      ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        handleOscData(data.message);
-    };
-  
-  
+  // const  wsHandler = new WebSocketHandler('ws://localhost:8081');
+
+  // Connect to WebSocket server
+  const socket = new WebSocket("ws://localhost:3000");
+  socket.onopen = function (event) {
+    console.log("WebSocket connection opened:", event);
+    wsStatus = "Connected";
+  };
+
+  socket.onmessage = function (event) {
+    let msg = JSON.parse(event.data);
+    handleOscData(msg);
+  };
+
+  socket.onerror = function (error) {
+    console.log("WebSocket Error:", error);
+    wsStatus = "Error";
+  };
+
+  socket.onclose = function (event) {
+    if (event.wasClean) {
+      console.log(
+        `WebSocket closed cleanly, code=${event.code}, reason=${event.reason}`
+      );
+      wsStatus = "Closed";
+    } else {
+      console.log("WebSocket connection died");
+      wsStatus = "Disconnected";
+    }
+  };
+
   createCanvas(windowWidth, windowHeight);
   cellSize = min(width, height) / gridSize;
-  offsetX = (width - (cellSize * gridSize)) / 2;
-  offsetY = (height - (cellSize * gridSize)) / 2;
+  offsetX = (width - cellSize * gridSize) / 2;
+  offsetY = (height - cellSize * gridSize) / 2;
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
@@ -28,8 +50,8 @@ function setup() {
       sliders.push(new Slider(x, y));
     }
   }
-  
-   let sliderID = 1; // Start from 1
+
+  let sliderID = 1; // Start from 1
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       let x = offsetX + i * cellSize;
@@ -38,17 +60,17 @@ function setup() {
       sliderID++; // Increment the id for next slider
     }
   }
-  
+
   // Set up relationships
   for (let i = 0; i < sliders.length; i++) {
     let currentSlider = sliders[i];
     let relatedSlider = random(sliders); // Picking a random slider as related
-    while (relatedSlider === currentSlider) { // Ensure we don't relate a slider with itself
+    while (relatedSlider === currentSlider) {
+      // Ensure we don't relate a slider with itself
       relatedSlider = random(sliders);
     }
     relationships.push([currentSlider, relatedSlider]);
   }
-  
 }
 
 function draw() {
@@ -70,10 +92,10 @@ class Slider {
     this.dragging = false;
   }
 
-   display() {
+  display() {
     // Set the fill color for the square
     fill(204, 255, 204); // Pastel lime green
-    
+
     stroke(255); // White border
     push();
     strokeWeight(10);
@@ -81,21 +103,26 @@ class Slider {
     pop();
 
     // Draw the line dividing the square down the middle
-    line(this.x + cellSize / 2, this.y, this.x + cellSize / 2, this.y + cellSize);
+    line(
+      this.x + cellSize / 2,
+      this.y,
+      this.x + cellSize / 2,
+      this.y + cellSize
+    );
 
     // Draw the letter 'T'
     fill(255, 0, 0); // Red color for the letter 'T'
     textSize(cellSize * 0.2); // Set text size
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
-    text('T', this.x + cellSize / 2, this.textY);
+    text("T", this.x + cellSize / 2, this.textY);
   }
 
- drag() {
+  drag() {
     if (this.dragging) {
       let dy = mouseY - this.textY;
       this.textY = constrain(mouseY, this.y, this.y + cellSize);
-      
+
       // Adjust other sliders based on relationships
       for (let rel of relationships) {
         if (rel[0] === this) {
@@ -110,12 +137,17 @@ class Slider {
     this.textY = constrain(this.textY + dy, this.y, this.y + cellSize);
   }
 
- press(pX, pY) {
-  if (pX > this.x && pX < this.x + cellSize && pY > this.y && pY < this.y + cellSize) {
-    this.dragging = true;
-    console.log("Moving T with ID:", this.id);
+  press(pX, pY) {
+    if (
+      pX > this.x &&
+      pX < this.x + cellSize &&
+      pY > this.y &&
+      pY < this.y + cellSize
+    ) {
+      this.dragging = true;
+      console.log("Moving T with ID:", this.id);
+    }
   }
-}
 
   release() {
     this.dragging = false;
@@ -123,10 +155,9 @@ class Slider {
   }
 }
 
-
 function handleOscData(message) {
-    console.log("Received OSC:", message);
-    // React to the OSC message as needed within the sketch
+  console.log("Received OSC:", message);
+  // React to the OSC message as needed within the sketch
 }
 
 function mousePressed() {
