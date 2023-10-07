@@ -2,6 +2,8 @@ let gridSize = 3;
 let cellSize;
 let offsetX, offsetY;
 let sliders = []; // To store the slider positions
+let sliderValues = Array(9).fill(0); // Assuming a value of 0 for each slider initially.
+
 let relationships = [];
 let wsStatus = "Connecting...";
 
@@ -155,9 +157,10 @@ class Slider {
   }
 }
 
-function handleOscData(message) {
-  console.log("Received OSC:", message);
-  // React to the OSC message as needed within the sketch
+function handleOscData(data) {
+  const { clientNumber, oscData } = data.data;
+  sliderValues[clientNumber - 1] = oscData; // Subtract 1 because arrays are 0-indexed.
+  console.log(`Data from client ${clientNumber}:`, oscData);
 }
 
 function mousePressed() {
