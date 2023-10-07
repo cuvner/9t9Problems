@@ -40,18 +40,10 @@ function setup() {
     }
   };
 
-  createCanvas(windowWidth, windowHeight);
+   createCanvas(windowWidth, windowHeight);
   cellSize = min(width, height) / gridSize;
   offsetX = (width - cellSize * gridSize) / 2;
   offsetY = (height - cellSize * gridSize) / 2;
-
-  for (let i = 0; i < gridSize; i++) {
-    for (let j = 0; j < gridSize; j++) {
-      let x = offsetX + i * cellSize;
-      let y = offsetY + j * cellSize;
-      sliders.push(new Slider(x, y));
-    }
-  }
 
   let sliderID = 1; // Start from 1
   for (let i = 0; i < gridSize; i++) {
@@ -117,7 +109,7 @@ class Slider {
     textSize(cellSize * 0.2); // Set text size
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
-    text("T", this.x + cellSize / 2, this.textY);
+    text("T9", this.x + cellSize / 2, this.textY);
   }
 
   drag() {
@@ -133,6 +125,15 @@ class Slider {
         }
       }
     }
+  }
+  
+ moveSliderOsc(value) {
+        this.textY = constrain(this.textY + value, this.y, this.y + cellSize);
+    }
+  
+  //method to 
+   setValue(value) {
+    this.textY = map(value, 0, 1, this.y + cellSize, this.y); // Assumes value is between 0 and 1
   }
 
   adjust(dy) {
@@ -156,12 +157,26 @@ class Slider {
     console.log("T y-value:", this.textY - this.y);
   }
 }
-
 function handleOscData(data) {
-  const { clientNumber, oscData } = data.data;
-  sliderValues[clientNumber - 1] = oscData; // Subtract 1 because arrays are 0-indexed.
-  console.log(`Data from client ${clientNumber}:`, oscData);
+    const { clientNumber, oscData } = data.data;
+    
+    // Adjust the slider corresponding to the client
+    let primarySlider = sliders[clientNumber - 1];
+    primarySlider.adjust(oscData);
+
+    // Find and adjust the related slider
+    for (let rel of relationships) {
+        if (rel[0] === primarySlider) {
+            let relatedSlider = rel[1];
+            relatedSlider.moveSliderOsc(oscData * 0.5); // Adjust related slider by half or any desired factor
+            break;
+        }
+    }
+
+    console.log(`Client ${clientNumber} is controlling slider ${clientNumber} with value ${oscData}`);
 }
+
+
 
 function mousePressed() {
   for (let slider of sliders) {
