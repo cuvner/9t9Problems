@@ -136,6 +136,14 @@ class Slider {
   // New method to activate or deactivate this slider for sending OSC data
 }
 
+function handleOscData(data) {
+    const { clientNumber, oscData } = data.data;
+    
+
+
+    console.log(`Client ${clientNumber} is controlling slider ${clientNumber} with value ${oscData}`);
+}
+
 function mousePressed() {
   slider.press(mouseX, mouseY);
 }
