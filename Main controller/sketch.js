@@ -121,7 +121,7 @@ class Slider {
       for (let rel of relationships) {
         if (rel[0] === this) {
           let relatedSlider = rel[1];
-          relatedSlider.adjust(dy * 0.5); // Adjusts related slider by half the movement of the primary slider
+          //relatedSlider.adjust(dy * 0.5); // Adjusts related slider by half the movement of the primary slider
         }
       }
     }
@@ -137,7 +137,7 @@ class Slider {
   }
 
   adjust(dy) {
-    this.textY = constrain(this.textY + dy, this.y, this.y + cellSize);
+    this.textY = constrain(dy, this.y, this.y + cellSize);
   }
 
   press(pX, pY) {
@@ -162,13 +162,17 @@ function handleOscData(data) {
     
     // Adjust the slider corresponding to the client
     let primarySlider = sliders[clientNumber - 1];
-    primarySlider.adjust(oscData);
+   // Assuming slider.y is the topmost position of the slider and sliderHeight is its height
+  primarySlider.setValue(oscData);
+    let sliderPos = map(oscData, 0, 1, this.y, this.y);
+    
+   // primarySlider.adjust(sliderPos);
 
     // Find and adjust the related slider
     for (let rel of relationships) {
         if (rel[0] === primarySlider) {
             let relatedSlider = rel[1];
-            relatedSlider.moveSliderOsc(oscData * 0.5); // Adjust related slider by half or any desired factor
+            relatedSlider.setValue(oscData*0.5);; // Adjust related slider by half or any desired factor
             break;
         }
     }
